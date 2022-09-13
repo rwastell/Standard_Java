@@ -31,9 +31,9 @@ When the unit does not match any of the three most common units, (MB, GB or TB) 
 the unupdated value to the string, or in other words the result would be unchanged.
 
 Memory Examples:
-12 mb -> 12MB
-12 Gigs additional -> 12GB
-8.53 -> 8.53
+12 mb -> 12MB  |
+12 Gigs additional -> 12GB |
+8.53 -> 8.53 
 
 MAC Standardization:
 Standardizing the MAC address will result in a MAC address with all letters capitalized and no dividing 
@@ -43,6 +43,6 @@ would result in the field being returned unchanged. NOTE: If the field contains 
 then the Notes would be converted into a MAC address standardized, with the nearby characters (asset 60404).
 
 MAC Examples:
-a8:60:b6:04:e5:0f -> A860B604E50F
-f4:39:09:0a:92:85; a0:8c:fd:d5:3d:ab -> F439090A9285;A08CFDD53DAB
+a8:60:b6:04:e5:0f -> A860B604E50F |
+f4:39:09:0a:92:85; a0:8c:fd:d5:3d:ab -> F439090A9285;A08CFDD53DAB |
 a0:d3:c1:2c:60:94 (lan) -> a0:d3:c1:2c:60:94 (lan)
