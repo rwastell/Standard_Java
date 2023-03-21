@@ -5,11 +5,13 @@ import java.util.Scanner;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
+// import java.io.DataOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.FileInputStream;
 import java.io.File;
+import org.apache.commons.lang3.StringUtils;
 import org.json.*;
 
 
@@ -39,7 +41,7 @@ public class standard
 
         System.setOut(stream);
 
-        System.out.println("Asset ID: Serial In  Memory In  MAC In  |  Serial Out  Memory Out  MAC Out");
+        System.out.println("Asset ID: Serial In  Memory In  MAC In  Processor In  |  Serial Out  Memory Out  MAC Out  Processor Out");
 
         while(input.hasNextLine()){
             //Run the get and post requests here
@@ -47,7 +49,7 @@ public class standard
 
             System.out.print(assetID + ": ");
 
-            Thread.sleep(200);
+            Thread.sleep(300);
 
             getRequest(assetID, Bearer);
 
@@ -56,6 +58,8 @@ public class standard
             memStand();
 
             standardizedMAC();
+
+            processor();
 
             postRequest(assetID, Bearer);
 
@@ -113,14 +117,19 @@ public class standard
         HttpURLConnection connect = (HttpURLConnection) url.openConnection();
 
         connect.setDoOutput(true);
+        connect.setRequestMethod("POST");
         connect.setRequestProperty("Authorization", "Bearer " + Bearer);
         connect.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-        connect.setRequestMethod("POST");
         connect.setRequestProperty("Content-Length", Integer.toString(postData.length()));
-        connect.setUseCaches(false);
+        // connect.setUseCaches(false);
 
-        DataOutputStream dos = new DataOutputStream(connect.getOutputStream());
-        dos.writeBytes(postData);
+        try (OutputStream outputStream = connect.getOutputStream()){
+            outputStream.write(postData.getBytes());
+            outputStream.flush();
+        }
+
+        // DataOutputStream dos = new DataOutputStream(connect.getOutputStream());
+        // dos.writeBytes(postData);
 
         BufferedReader bf = new BufferedReader(new InputStreamReader(connect.getInputStream()));
         String line;
@@ -144,6 +153,7 @@ public class standard
         System.out.print(jsonResponse.getString("SerialNumber") + " ");
 
         jsonResponse.put("SerialNumber", updatedSN);
+
     }
 
     /* Searches the jsonResponse to isolate the memory field. Once isolated
@@ -197,6 +207,17 @@ public class standard
                         endDigit++;
                         numAfterDecimal++;
                     }
+                }else if(string[endDigit] == '0' && (string[endDigit + 1] > '0' && string[endDigit + 1] <= '9')){
+                    if(numAfterDecimal == 1){
+                        standard += '.';
+                        standard += string[endDigit];
+                        numAfterDecimal++;
+                        endDigit++;
+                    }else{
+                        standard += string[endDigit];
+                        endDigit++;
+                        numAfterDecimal++;
+                    }
                 }else{
                     endDigit++;
                 }
@@ -218,8 +239,7 @@ public class standard
             standard += "MB";
         }else if(string[endDigit] == 'g' || string[endDigit] == 'G'){
             standard += "GB";    
-        }
-        else if(string[endDigit] == 't' || string[endDigit] == 'T'){
+        }else if(string[endDigit] == 't' || string[endDigit] == 'T'){
             standard += "TB";
         }else if(string[endDigit] == ' ' && endDigit < memInput.length() - 1){
             if(string[endDigit + 1] == 'm' || string[endDigit + 1] == 'M'){
@@ -255,12 +275,14 @@ public class standard
      * for the updated fields. If a field is empty, an extra space
      * will be printed. Otherwise, will print in hte order of SerialNumber
      * Memory, then MAC. */
+    // Currently configed for only processor standardization
     public static void checker(){
         System.out.print(postedJson.get("SerialNumber") + " ");
 
         JSONArray attributes = postedJson.getJSONArray("Attributes");
         String mem = "";
         String mac = "";
+        String processor = "";
         for(int i = 0; i < attributes.length(); i++){
             JSONObject currentObj = attributes.getJSONObject(i);
             if(currentObj.getInt("ID") == 3506){
@@ -269,9 +291,14 @@ public class standard
             if(currentObj.getInt("ID") == 3507){
                 mem = currentObj.getString("Value");
             }
+            if(currentObj.getInt("ID") == 3512){
+                processor = currentObj.getString("Value");
+            }
         }
 
-        System.out.println(mem + " " + mac);
+        // System.out.println(processor);
+        // Line below is the one that should run all the time
+        System.out.println(mem + " " + mac + " " + processor);
     }
 
     /* Isolates and updates the MAC address in the jsonResponse to these specs:
@@ -294,7 +321,7 @@ public class standard
             }
         }
 
-        System.out.print(macInput + " | ");
+        System.out.print(macInput + " ");
 
         //if empty returns the empty string
         if(macInput == ""){
@@ -318,6 +345,11 @@ public class standard
                 }
                 i++;
             }
+            char[] standardArr = standard.toCharArray();
+            if(standardArr[standard.length() - 1] == ';'){
+                standard = StringUtils.chop(standard);
+                numDividors--;
+            }
             if((standard.length() - numDividors) % 12 != 0){
                 return;
             }else{
@@ -330,4 +362,46 @@ public class standard
         }else
             return;
         }
+
+    /* 
+    Next function to remove the trademarks from the processor field
+    Need to find the id in the custom attributes array
+    Take in the value, if the string doesn't contain () move on
+    If so check for the trademarks, ie (TM) or (R)
+    Remove those and leave the rest of the string unchanged, return that string to put into the json
+    */
+    // Processor Standardizer, missing json configuration
+    static void processor(){
+        
+        String input = "";
+        JSONArray arr = jsonResponse.getJSONArray("Attributes");
+        int index = 0;
+        for(int i = 0; i < arr.length(); i++){
+            JSONObject currentObj = arr.getJSONObject(i);
+            if(currentObj.getInt("ID") == 3512){
+                input = currentObj.getString("Value");
+                index = i;
+            }
+        }
+        
+        // This is now correct as processor has been added as last change in full program
+        System.out.print(input + " | ");
+
+        if(input == ""){
+            return;
+        }
+        
+        if (input.contains("(TM)") || input.contains("(R)")){
+            while(input.contains("(TM)")){
+                input = input.replace("(TM)", "");
+            }
+            while(input.contains("(R)")){
+                input = input.replace("(R)", "");
+            }
+        }
+
+        arr.getJSONObject(index).put("Value", input);
+
+        return;
     }
+}
