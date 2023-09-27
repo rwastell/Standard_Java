@@ -29,13 +29,13 @@ public class standard
      * First line is the bearer token
      * Second and following lines are a singular assetID. */
     public static void main( String[] args ) throws IOException, InterruptedException {
-        System.setIn(new FileInputStream(new File("TDXtest.txt")));
+        System.setIn(new FileInputStream(new File("Input.txt")));
         
         Scanner input = new Scanner(System.in);
 
         String Bearer = input.nextLine();
 
-        File output = new File("TestOut.txt");
+        File output = new File("Output.txt");
 
         PrintStream stream = new PrintStream(output);
 
@@ -160,7 +160,7 @@ public class standard
      * it will change the field to a standardized version with the memory input
      * (i.e. amount of memory an int) with an abreviated version of the units 
      * the memory is measured in. If there is no unit listed will change nothing.
-     * If there are notes after the unit, THEY WILL BE DELETED.
+     * Will remove the space if the label immediately follows the number listed
      * If there are any units besides TB, GB, or MB, the field will be left unchanged. 
      * Requires: The memory to start with an int to make changes. */
     public static void memStand(){
@@ -190,6 +190,13 @@ public class standard
         //Potential Index Out of bounds error
         boolean afterDecimal = false;
         int numAfterDecimal = 0;
+
+        String[] spaces = memInput.split(" ");
+        if(spaces[0].contains("GB") || spaces[0].contains("TB") || spaces[0].contains("MB")){
+            return;
+        }
+
+
         while(endDigit < memInput.length() && (string[endDigit] >= '.' && string[endDigit] <= '9')){
             if(string[endDigit] == '.'){
                 afterDecimal = true;
@@ -253,6 +260,12 @@ public class standard
             }
         }else{
             return;
+        }
+
+        if(spaces.length > 2){
+            for(int i = 2; i < spaces.length; i++){
+                standard += " " + spaces[i];
+            }
         }
 
         arrayMem.getJSONObject(arrayIndexInput).put("Value", standard);
@@ -391,6 +404,7 @@ public class standard
             return;
         }
         
+        // Removed ( ) Need to add back to be (*)
         if (input.contains("(TM)") || input.contains("(R)")){
             while(input.contains("(TM)")){
                 input = input.replace("(TM)", "");
