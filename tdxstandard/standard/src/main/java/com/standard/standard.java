@@ -1,7 +1,10 @@
 package com.standard;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.Stack;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.io.BufferedReader;
@@ -27,7 +30,8 @@ public class standard
 
     /* The input should come from a well formatted input file following the convention:
      * First line is the bearer token
-     * Second and following lines are a singular assetID. */
+     * Second and following lines are a singular assetID. 
+     * IDEA for FUTURE: add in the dupe checker, then add command line args to control */
     public static void main( String[] args ) throws IOException, InterruptedException {
         System.setIn(new FileInputStream(new File("Input.txt")));
         
@@ -39,38 +43,80 @@ public class standard
 
         PrintStream stream = new PrintStream(output);
 
-        System.setOut(stream);
+        // Add in the arg checker to read for dupe checker
+        if (args[0].equals("dupe")){
+            // Run dupe checker
+            System.setOut(stream);
 
-        System.out.println("Asset ID: Serial In  Memory In  MAC In  Processor In  |  Serial Out  Memory Out  MAC Out  Processor Out");
+            Map<String, String> macMap = new HashMap<String, String>();
 
-        while(input.hasNextLine()){
-            //Run the get and post requests here
-            String assetID = input.nextLine();
+            Stack<String> duplicates = new Stack<String>();
 
-            System.out.print(assetID + ": ");
+            System.out.println("Searching for duplicate MACs, printing out assetIds of duplicates");
 
-            Thread.sleep(300);
+            while(input.hasNextLine()){
+                String assetId = input.nextLine();
 
-            getRequest(assetID, Bearer);
+                getRequest(assetId, Bearer);
 
-            SNstandard();
+                String macAddress = getMacFromJson();
 
-            memStand();
+                if(macMap.containsKey(macAddress) && macAddress != ""){
+                    duplicates.push(assetId);
+                    duplicates.push(macMap.get(macAddress));
+                }else{
+                    macMap.put(macAddress, assetId);
+                }
+            }
 
-            standardizedMAC();
+            if(duplicates.empty()){
+                System.out.println("No Duplicates found");
+            }else{
+                while(!duplicates.empty()){
+                    String firstDuplicate = duplicates.pop();
+                    String secondDuplicate = duplicates.pop();
+    
+                    System.out.println(firstDuplicate + " = " + secondDuplicate);
+                }
+            }
 
-            processor();
+        }else if (args[0].equals("standard")){
+            //Run the standardizer
+            System.setOut(stream);
 
-            postRequest(assetID, Bearer);
+            System.out.println("Asset ID: Serial In  Memory In  MAC In  Processor In  |  Serial Out  Memory Out  MAC Out  Processor Out");
 
-            checker();
+            while(input.hasNextLine()){
+                //Run the get and post requests here
+                String assetID = input.nextLine();
 
-            jsonResponse = null;
+                System.out.print(assetID + ": ");
 
-            postedJson = null;
+                Thread.sleep(300);
+
+                getRequest(assetID, Bearer);
+
+                SNstandard();
+
+                memStand();
+
+                standardizedMAC();
+
+                processor();
+
+                postRequest(assetID, Bearer);
+
+                checker();
+
+                jsonResponse = null;
+
+                postedJson = null;
         }
-
-        //System.out.println(jsonResponse.toString(4));
+        }else{
+            // Error State: No process selected
+            System.out.println("ERROR: No process selected");
+            System.out.println("Please enter dupe or standard as args in the launch.json file to select the process");
+        }
 
         input.close();
     }
@@ -127,9 +173,6 @@ public class standard
             outputStream.write(postData.getBytes());
             outputStream.flush();
         }
-
-        // DataOutputStream dos = new DataOutputStream(connect.getOutputStream());
-        // dos.writeBytes(postData);
 
         BufferedReader bf = new BufferedReader(new InputStreamReader(connect.getInputStream()));
         String line;
@@ -288,7 +331,6 @@ public class standard
      * for the updated fields. If a field is empty, an extra space
      * will be printed. Otherwise, will print in hte order of SerialNumber
      * Memory, then MAC. */
-    // Currently configed for only processor standardization
     public static void checker(){
         System.out.print(postedJson.get("SerialNumber") + " ");
 
@@ -309,7 +351,6 @@ public class standard
             }
         }
 
-        // System.out.println(processor);
         // Line below is the one that should run all the time
         System.out.println(mem + " " + mac + " " + processor);
     }
@@ -333,6 +374,7 @@ public class standard
                 indexMacAddress = i;
             }
         }
+        // Code below parsing comment/above this one is the same as getMac Function from dupe checker
 
         System.out.print(macInput + " ");
 
@@ -417,5 +459,18 @@ public class standard
         arr.getJSONObject(index).put("Value", input);
 
         return;
+    }
+
+    public static String getMacFromJson(){
+        String macInput = "";
+        JSONArray arrayMem = jsonResponse.getJSONArray("Attributes");
+        for(int i = 0; i < arrayMem.length(); i++){
+            JSONObject currentObj = arrayMem.getJSONObject(i);
+            if(currentObj.getInt("ID") == 3506){
+                macInput = currentObj.getString("Value");
+            }
+        }
+
+        return macInput;
     }
 }
