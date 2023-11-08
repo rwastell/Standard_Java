@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.regex.Pattern;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.io.BufferedReader;
@@ -390,6 +391,7 @@ public class standard
             String capitalized = macInput.toUpperCase();
             char[] string = capitalized.toCharArray();
             int numDividors = 0;
+            // Calculating and inserting the correct number of dividers into the formatted MAC
             while(i < macInput.length()){
                 if(validChar(string[i])){
                     standard += string[i];
@@ -408,15 +410,48 @@ public class standard
             if((standard.length() - numDividors) % 12 != 0){
                 return;
             }else{
+                // Two cases: One address no ; and more with the ;
+                if (standard.contains(";")){
+                    String[] formattedAddresses = standard.split(";");
+                    for (String address : formattedAddresses){
+                        if(!isHexadecimal(address)){
+                            return;
+                        }
+                    }
+                }else{
+                    if(!isHexadecimal(standard)){
+                        return;
+                    }
+                }
+                // After checking address add to json
                 arrayMem.getJSONObject(indexMacAddress).put("Value", standard);
                 return;
             }
         }else if(macInput.length() == 12){
+            // Add hex check here for macInput
+            if(!isHexadecimal(macInput.toUpperCase())){
+                return;
+            }
+
             arrayMem.getJSONObject(indexMacAddress).put("Value", macInput.toUpperCase());
-            return;
-        }else
-            return;
         }
+
+        return;
+    }
+
+    // Function to check the Macs are in hexadecimal format to reduce potentials misforamts
+    // Using java Pattern object to determine if the input contains only hex chars
+    private static boolean isHexadecimal(String macInput){
+        // Define the regular expression for a valid MAC address without dividers
+        String macAddressPattern = "([0-9A-Fa-f]{2}){5}([0-9A-Fa-f]{2})";
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(macAddressPattern);
+
+        // Check if the input matches the pattern
+        return pattern.matcher(macInput).matches();
+
+    }
 
     /* 
     Next function to remove the trademarks from the processor field

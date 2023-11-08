@@ -50,7 +50,7 @@ Standardizing the MAC address will result in a MAC address with all letters capi
 characters within a singular MAC address. In the case of there being more than one MAC address in the field,
 the result would be the two addresses standardized separated by a singular semicolon. Any notes left in the field
 would result in the field being returned unchanged. NOTE: If the field contains notes that are evenly divisible by 12
-then the input would be converted into a MAC address standardized, with the nearby characters (asset 60404).
+and contain no letters > F, then the input would be converted into a MAC address standardized, with the nearby characters.
 
 MAC Examples:
 a8:60:b6:04:e5:0f -> A860B604E50F |
@@ -58,7 +58,7 @@ f4:39:09:0a:92:85; a0:8c:fd:d5:3d:ab -> F439090A9285;A08CFDD53DAB |
 a0:d3:c1:2c:60:94 (lan) -> a0:d3:c1:2c:60:94 (lan)
 
 ERROR Example:
-a8:60:b6:04:e4:0f twelveletter -> A860B604E40F;TWELVELETTER
+a8:60:b6:04:e4:0f aabbccddeeff -> A860B604E40F;AABBCCDDEEFF
 
 FOR THE DUPE ARG:
 Output.txt (Output file):

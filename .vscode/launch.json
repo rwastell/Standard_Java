@@ -16,7 +16,7 @@
             "name": "standard",
             "request": "launch",
             "mainClass": "com.standard.standard",
-            "args": "dupe",
+            "args": "standard",
             "projectName": "standard"
         }
     ]
