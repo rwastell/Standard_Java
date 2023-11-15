@@ -427,13 +427,10 @@ public class standard
                 arrayMem.getJSONObject(indexMacAddress).put("Value", standard);
                 return;
             }
-        }else if(macInput.length() == 12){
-            // Add hex check here for macInput
-            if(!isHexadecimal(macInput.toUpperCase())){
-                return;
-            }
+        }else if(macInput.length() == 12 && isHexadecimal(macInput.toUpperCase())){
 
             arrayMem.getJSONObject(indexMacAddress).put("Value", macInput.toUpperCase());
+
         }
 
         return;
@@ -445,7 +442,6 @@ public class standard
         // Define the regular expression for a valid MAC address without dividers
         String macAddressPattern = "([0-9A-Fa-f]{2}){5}([0-9A-Fa-f]{2})";
 
-        // Compile the pattern
         Pattern pattern = Pattern.compile(macAddressPattern);
 
         // Check if the input matches the pattern
@@ -481,14 +477,12 @@ public class standard
             return;
         }
         
-        // Removed ( ) Need to add back to be (*)
-        if (input.contains("(TM)") || input.contains("(R)")){
-            while(input.contains("(TM)")){
-                input = input.replace("(TM)", "");
-            }
-            while(input.contains("(R)")){
-                input = input.replace("(R)", "");
-            }
+        while(input.contains("(TM)")){
+            input = input.replace("(TM)", "");
+        }
+
+        while(input.contains("(R)")){
+            input = input.replace("(R)", "");
         }
 
         arr.getJSONObject(index).put("Value", input);
